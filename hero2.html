@@ -1,0 +1,230 @@
+<!DOCTYPE >
+<html>
+  <head>
+    <title>3D SCMC</title>
+
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <link rel="stylesheet" href="hero.css" />
+
+    <!-- Import the component -->
+    <script
+      type="module"
+      src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"
+    ></script>
+  </head>
+  <body>
+    <div class="row">
+      <div class="col-4 col-s-12">
+        <div id="heroinfo">
+          <img style="width:250px, margin:auto;" src="images/oconner.jpg" />
+          <p>
+            MYLES O'CONNOR
+            <br />
+            1823 - 1909
+          </p>
+
+          <small>Pioneer California Philanthropist</small>
+          <br />
+          <br />
+          <small>
+            Myles Poore O'Connor embodied Catholic success in the booming
+            economies of the Far West. Born in Ireland in 1823, O'Connor
+            emigrated first to St. Louis where he was trained in the law. Upon
+            hearing of the discovery of gold in California in 1849, he set out
+            for the West, traveling overland by mule team across the plains and
+            over the Rockies. O'Connor was extraordinarily generous with his new
+            found riches, donating hundreds of thousands of dollars to Catholic
+            religious orders, such as the Sisters of Notre Dame and the Jesuits.
+            <br />
+            <br />
+            <a
+              href="https://cuexhibits.wrlc.org/exhibits/show/turning-toward-a-new-century--/from-east-to-west/myles-poore-o--connor"
+              target="_blank"
+            >
+              More Information
+            </a></small
+          >
+
+          <br />
+          <br />
+
+          <a href="index.html">HOME</a>
+          ||
+
+          <a href="hero.html">BACK</a>
+          ||
+          <a href="hero3.html">NEXT</a>
+          ||
+          <a href="void.html">NECROPOLIS</a>
+        </div>
+      </div>
+
+      <div class="col-8 col-s-12">
+        <!-- 3D Model Viewer -->
+        <model-viewer
+          id="pan"
+          loading="eager"
+          src="https://cdn.glitch.com/3559418b-0a3b-4d6d-8df2-556730e2faf5%2FGY_Conners_3.glb?v=1617643564376"
+          alt="A 3D model of a O'Conners' Grave Site"
+          auto-rotate
+          camera-controls
+          style="background-color: black;"
+        ></model-viewer>
+        <!-- 3D Model Viewer Script to Pan Camera - Shift + Mouse Drag -->
+      </div>
+    </div>
+    <script>
+      (() => {
+        const modelViewer = document.querySelector("#pan");
+        const tapDistance = 2;
+        let panning = false;
+        let panX, panY;
+        let startX, startY;
+        let lastX, lastY;
+        let metersPerPixel;
+
+        const startPan = () => {
+          const orbit = modelViewer.getCameraOrbit();
+          const { theta, phi, radius } = orbit;
+          const psi = theta - modelViewer.turntableRotation;
+          metersPerPixel =
+            (0.75 * radius) / modelViewer.getBoundingClientRect().height;
+          panX = [-Math.cos(psi), 0, Math.sin(psi)];
+          panY = [
+            -Math.cos(phi) * Math.sin(psi),
+            Math.sin(phi),
+            -Math.cos(phi) * Math.cos(psi)
+          ];
+          modelViewer.interactionPrompt = "none";
+        };
+
+        const movePan = (thisX, thisY) => {
+          const dx = (thisX - lastX) * metersPerPixel;
+          const dy = (thisY - lastY) * metersPerPixel;
+          lastX = thisX;
+          lastY = thisY;
+
+          const target = modelViewer.getCameraTarget();
+          target.x += dx * panX[0] + dy * panY[0];
+          target.y += dx * panX[1] + dy * panY[1];
+          target.z += dx * panX[2] + dy * panY[2];
+          modelViewer.cameraTarget = `${target.x}m ${target.y}m ${target.z}m`;
+
+          // This pauses turntable rotation
+          modelViewer.dispatchEvent(
+            new CustomEvent("camera-change", {
+              detail: { source: "user-interaction" }
+            })
+          );
+        };
+
+        const recenter = pointer => {
+          panning = false;
+          if (
+            Math.abs(pointer.clientX - startX) > tapDistance ||
+            Math.abs(pointer.clientY - startY) > tapDistance
+          )
+            return;
+          const rect = modelViewer.getBoundingClientRect();
+          const x = event.clientX - rect.left;
+          const y = event.clientY - rect.top;
+          const hit = modelViewer.positionAndNormalFromPoint(x, y);
+          modelViewer.cameraTarget =
+            hit == null ? "auto auto auto" : hit.position.toString();
+        };
+
+        const onPointerUp = event => {
+          const pointer = event.clientX ? event : event.changedTouches[0];
+          if (
+            Math.abs(pointer.clientX - startX) < tapDistance &&
+            Math.abs(pointer.clientY - startY) < tapDistance
+          ) {
+            recenter(pointer);
+          }
+          panning = false;
+        };
+
+        modelViewer.addEventListener(
+          "mousedown",
+          event => {
+            startX = event.clientX;
+            startY = event.clientY;
+            panning =
+              event.button === 2 ||
+              event.ctrlKey ||
+              event.metaKey ||
+              event.shiftKey;
+            if (!panning) return;
+
+            lastX = startX;
+            lastY = startY;
+            startPan();
+            event.stopPropagation();
+          },
+          true
+        );
+
+        modelViewer.addEventListener(
+          "touchstart",
+          event => {
+            startX = event.touches[0].clientX;
+            startY = event.touches[0].clientY;
+            panning = event.touches.length === 2;
+            if (!panning) return;
+
+            const { touches } = event;
+            lastX = 0.5 * (touches[0].clientX + touches[1].clientX);
+            lastY = 0.5 * (touches[0].clientY + touches[1].clientY);
+            startPan();
+          },
+          true
+        );
+
+        modelViewer.addEventListener(
+          "mousemove",
+          event => {
+            if (!panning) return;
+
+            movePan(event.clientX, event.clientY);
+            event.stopPropagation();
+          },
+          true
+        );
+
+        modelViewer.addEventListener(
+          "touchmove",
+          event => {
+            if (!panning || event.touches.length !== 2) return;
+
+            const { touches } = event;
+            const thisX = 0.5 * (touches[0].clientX + touches[1].clientX);
+            const thisY = 0.5 * (touches[0].clientY + touches[1].clientY);
+            movePan(thisX, thisY);
+          },
+          true
+        );
+
+        self.addEventListener(
+          "mouseup",
+          event => {
+            recenter(event);
+          },
+          true
+        );
+
+        self.addEventListener(
+          "touchend",
+          event => {
+            if (event.touches.length === 0) {
+              recenter(event.changedTouches[0]);
+            }
+          },
+          true
+        );
+      })();
+    </script>
+  </body>
+</html>

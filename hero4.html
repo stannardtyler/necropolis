@@ -1,0 +1,239 @@
+<!DOCTYPE >
+<html>
+  <head>
+    <title>3D SCMC</title>
+
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <link rel="stylesheet" href="hero.css" />
+
+    <!-- Import the component -->
+    <script
+      type="module"
+      src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"
+    ></script>
+  </head>
+  <body>
+    <div class="row">
+      <div class="col-4 col-s-12">
+        <div id="heroinfo">
+<!--           <img src="images/owen.jpg" /> -->
+          <p>
+            B.S. FOX
+          <br />
+          1906 - 1991
+        </p>
+        <small
+          >One of the founders of the Santa Clara County Agricultural
+          Society</small
+        >
+        <br />
+        <br />
+        <small>
+          In the spring of 1852 Commodore Stockton, who then owned the Potrero
+          de Santa Clara rancho, which lies between San Jose and Santa Clara,
+          imported from Hovey's Massachusetts nursery a large number of trees
+          for the purpose of starting a nursery. With these trees came a
+          professional botanist named Sheldon, with B. S. Fox and Thomas Egan as
+          assistants. Sheldon died on the Isthmus and Fox took charge of the
+          enterprise, Egan assisting. B. S. Fox in 1853 established a
+          nursery of his own on Milpitas road. He had with him Thomas Egan and
+          the acreage was soon increased to 200 acres. Fox was not only a
+          pioneer fruit grower, but a man of great scientific knowledge. A large
+          orchard was developed from the nursery and to his enthusiasm Santa
+          Clara County owes much of its early horticultural development. He died
+          in 1881 and his landed property was left to his nephew, R. D. Fox, who
+          conducted the nursery successfully for many years and then became
+          connected with the California Nursery at Niles.
+            <br />
+            <br />
+            <a
+              href="https://www.sfgenealogy.org/santaclara/history/scchist12.htm"
+              target="_blank"
+            >
+              More Information
+            </a></small
+          >
+
+          <br />
+          <br />
+
+          <a href="index.html">HOME</a>
+          ||
+
+          <a href="hero3.html">BACK</a>
+          ||
+          <a href="hero5.html">NEXT</a>
+          ||
+          <a href="void.html">NECROPOLIS</a>
+        </div>
+      </div>
+
+      <div class="col-8 col-s-12">
+        <!-- 3D Model Viewer -->
+        <model-viewer
+          id="pan"
+          loading="eager"
+          src="https://cdn.glitch.com/3559418b-0a3b-4d6d-8df2-556730e2faf5%2FbsFOX_2.glb?v=1617643403108"
+          alt="A 3D model of a O'Conners' Grave Site"
+          auto-rotate
+          camera-controls
+          style="background-color: black;"
+        ></model-viewer>
+        <!-- 3D Model Viewer Script to Pan Camera - Shift + Mouse Drag -->
+      </div>
+    </div>
+    <script>
+      (() => {
+        const modelViewer = document.querySelector("#pan");
+        const tapDistance = 2;
+        let panning = false;
+        let panX, panY;
+        let startX, startY;
+        let lastX, lastY;
+        let metersPerPixel;
+
+        const startPan = () => {
+          const orbit = modelViewer.getCameraOrbit();
+          const { theta, phi, radius } = orbit;
+          const psi = theta - modelViewer.turntableRotation;
+          metersPerPixel =
+            (0.75 * radius) / modelViewer.getBoundingClientRect().height;
+          panX = [-Math.cos(psi), 0, Math.sin(psi)];
+          panY = [
+            -Math.cos(phi) * Math.sin(psi),
+            Math.sin(phi),
+            -Math.cos(phi) * Math.cos(psi)
+          ];
+          modelViewer.interactionPrompt = "none";
+        };
+
+        const movePan = (thisX, thisY) => {
+          const dx = (thisX - lastX) * metersPerPixel;
+          const dy = (thisY - lastY) * metersPerPixel;
+          lastX = thisX;
+          lastY = thisY;
+
+          const target = modelViewer.getCameraTarget();
+          target.x += dx * panX[0] + dy * panY[0];
+          target.y += dx * panX[1] + dy * panY[1];
+          target.z += dx * panX[2] + dy * panY[2];
+          modelViewer.cameraTarget = `${target.x}m ${target.y}m ${target.z}m`;
+
+          // This pauses turntable rotation
+          modelViewer.dispatchEvent(
+            new CustomEvent("camera-change", {
+              detail: { source: "user-interaction" }
+            })
+          );
+        };
+
+        const recenter = pointer => {
+          panning = false;
+          if (
+            Math.abs(pointer.clientX - startX) > tapDistance ||
+            Math.abs(pointer.clientY - startY) > tapDistance
+          )
+            return;
+          const rect = modelViewer.getBoundingClientRect();
+          const x = event.clientX - rect.left;
+          const y = event.clientY - rect.top;
+          const hit = modelViewer.positionAndNormalFromPoint(x, y);
+          modelViewer.cameraTarget =
+            hit == null ? "auto auto auto" : hit.position.toString();
+        };
+
+        const onPointerUp = event => {
+          const pointer = event.clientX ? event : event.changedTouches[0];
+          if (
+            Math.abs(pointer.clientX - startX) < tapDistance &&
+            Math.abs(pointer.clientY - startY) < tapDistance
+          ) {
+            recenter(pointer);
+          }
+          panning = false;
+        };
+
+        modelViewer.addEventListener(
+          "mousedown",
+          event => {
+            startX = event.clientX;
+            startY = event.clientY;
+            panning =
+              event.button === 2 ||
+              event.ctrlKey ||
+              event.metaKey ||
+              event.shiftKey;
+            if (!panning) return;
+
+            lastX = startX;
+            lastY = startY;
+            startPan();
+            event.stopPropagation();
+          },
+          true
+        );
+
+        modelViewer.addEventListener(
+          "touchstart",
+          event => {
+            startX = event.touches[0].clientX;
+            startY = event.touches[0].clientY;
+            panning = event.touches.length === 2;
+            if (!panning) return;
+
+            const { touches } = event;
+            lastX = 0.5 * (touches[0].clientX + touches[1].clientX);
+            lastY = 0.5 * (touches[0].clientY + touches[1].clientY);
+            startPan();
+          },
+          true
+        );
+
+        modelViewer.addEventListener(
+          "mousemove",
+          event => {
+            if (!panning) return;
+
+            movePan(event.clientX, event.clientY);
+            event.stopPropagation();
+          },
+          true
+        );
+
+        modelViewer.addEventListener(
+          "touchmove",
+          event => {
+            if (!panning || event.touches.length !== 2) return;
+
+            const { touches } = event;
+            const thisX = 0.5 * (touches[0].clientX + touches[1].clientX);
+            const thisY = 0.5 * (touches[0].clientY + touches[1].clientY);
+            movePan(thisX, thisY);
+          },
+          true
+        );
+
+        self.addEventListener(
+          "mouseup",
+          event => {
+            recenter(event);
+          },
+          true
+        );
+
+        self.addEventListener(
+          "touchend",
+          event => {
+            if (event.touches.length === 0) {
+              recenter(event.changedTouches[0]);
+            }
+          },
+          true
+        );
+      })();
+    </script>
+  </body>
+</html>
