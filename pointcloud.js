@@ -1,6 +1,9 @@
-/* global THREE */
+////- Importing the goods -///
+import * as THREE from "three"; //this loads the main threejs library
+import { OBJLoader } from "three/addons/loaders/OBJLoader.js"; //this loads the obj loader plugin
 
 window.addEventListener("load", init);
+
 let scene;
 let camera;
 let renderer;
@@ -19,36 +22,31 @@ function init() {
 
   renderer = new THREE.WebGLRenderer();
   renderer.setSize(window.innerWidth, window.innerHeight);
-  
+
   // const controls = new THREE.OrbitControls(camera)
   // controls.enableZoom = false
 
   scene.add(new THREE.AmbientLight(0x404040));
 
-//   let geometry = new THREE.TorusGeometry(10, 3, 16, 100);
-//   let material = new THREE.PointsMaterial({ color: 0xffffff, size: 0.25 });
-//   mesh = new THREE.Points(geometry, material);
+  // const loader = new THREE.OBJLoader();
+  const loader = new OBJLoader();
+  loader.load(
+    "models/untitled.obj",
+    (obj) => {
+      let material = new THREE.PointsMaterial({ color: 0xcccccc, size: 0.25 });
+      mesh = new THREE.Points(obj.children[0].geometry, material);
+      // mesh.position.y = -5
+      scene.add(mesh);
 
-//   scene.add(mesh);
-  
-const loader = new THREE.OBJLoader()
-  loader.load('https://cdn.glitch.com/4fa7cf00-160a-46c3-9eac-aac64e7d8222%2Funtitled.obj?v=1619474237156',
-              (obj) => {
-                    let material = new THREE.PointsMaterial({ color: 0xcccccc, size: .25 })
-                    mesh = new THREE.Points(obj.children[0].geometry, material)
-                   // mesh.position.y = -5
-                    scene.add(mesh)
-    
-                    mesh.scale.set(10, 10, 10);
-                    
-                },
-              (xhr) => {
-                  console.log(xhr)
-              },
-              (err) => {
-                  console.error("loading .obj went wrong, ", err)
-                }
-             )
+      mesh.scale.set(10, 10, 10);
+    },
+    (xhr) => {
+      console.log(xhr);
+    },
+    (err) => {
+      console.error("loading .obj went wrong, ", err);
+    }
+  );
 
   document.body.appendChild(renderer.domElement);
   animationLoop();
@@ -56,9 +54,9 @@ const loader = new THREE.OBJLoader()
 
 function animationLoop() {
   renderer.render(scene, camera);
-   if (mesh) {
-     mesh.rotation.y += 0.002;
-   }
+  if (mesh) {
+    mesh.rotation.y += 0.002;
+  }
 
   requestAnimationFrame(animationLoop);
 }

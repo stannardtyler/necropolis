@@ -10,10 +10,6 @@
     <!-- import the webpage's stylesheet -->
     <link rel="stylesheet" href="style.css" />
 
-    <!-- import the webpage's javascript file 
-    <script src="/script.js" defer></script>
--->
-
     <style>
       body {
         background-color: black;
@@ -28,9 +24,7 @@
         margin: auto;
         margin-top: 200px;
       }
-    </style>
 
-    <style>
       #blocker {
         position: absolute;
         width: 100%;
@@ -68,7 +62,16 @@
       }
     </style>
 
-    <!-- Import the component -->
+    <!-- Import the three js component -->
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three/build/three.module.js",
+          "three/addons/": "https://unpkg.com/three/examples/jsm/"
+        }
+      }
+    </script>
+    <!-- load the 3D viewer -->
     <script
       type="module"
       src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"
@@ -79,13 +82,13 @@
     <div id="blocker">
       <div id="instructions">
         <header>
-          <h1 style="margin-top:20px; margin-bottom:0;">
+          <h1 style="margin-top: 20px; margin-bottom: 0">
             Santa Clara Mission Cemetery
           </h1>
-          <p style="margin-top:0; margin-bottom:20px; text-align:center;">
+          <p style="margin-top: 0; margin-bottom: 20px; text-align: center">
             Historium Virtualis
           </p>
-          <p style="text-align:center; width:75%; margin: auto;">
+          <p style="text-align: center; width: 75%; margin: auto">
             Explore the digital archive of photoscanned grave sites in a 3D
             Virtual Environment or learn more about each individual and their
             histories through the Catalog.
@@ -118,9 +121,7 @@
       </div>
     </div>
 
-    <script src="/build/three.min.js"></script>
-    <script src="/pointcloud.js"></script>
-    <script src="/loaders/OBJLoader.js"></script>
-    <script type="module" src="/controls/OrbitControls.js"></script>
+    <script type="module" src="pointcloud.js"></script>
+    <!-- <script type="module" src="/controls/OrbitControls.js"></script> -->
   </body>
 </html>
